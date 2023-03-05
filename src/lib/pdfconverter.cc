@@ -46,7 +46,7 @@ using namespace wkhtmltopdf::settings;
 #define STRINGIZE_(x) #x
 #define STRINGIZE(x) STRINGIZE_(x)
 
-const qreal PdfConverter::millimeterToPointMultiplier = 3.779527559;
+const qreal PdfConverter::millimeterToPointMultiplier = 2.83464567;
 
 DLL_LOCAL QMap<QWebPage *, PageObject *> PageObject::webPageToObject;
 
@@ -101,37 +101,27 @@ PdfConverterPrivate::PdfConverterPrivate(PdfGlobal & s, PdfConverter & o) :
 	connect(&pageLoader, SIGNAL(loadFinished(bool)), this, SLOT(pagesLoaded(bool)));
 	connect(&pageLoader, SIGNAL(error(QString)), this, SLOT(forwardError(QString)));
 	connect(&pageLoader, SIGNAL(warning(QString)), this, SLOT(forwardWarning(QString)));
-	connect(&pageLoader, SIGNAL(info(QString)), this, SLOT(forwardInfo(QString)));
-	connect(&pageLoader, SIGNAL(debug(QString)), this, SLOT(forwardDebug(QString)));
 
 #ifdef __EXTENSIVE_WKHTMLTOPDF_QT_HACK__
     connect(&measuringHFLoader, SIGNAL(loadProgress(int)), this, SLOT(loadProgress(int)));
     connect(&measuringHFLoader, SIGNAL(loadFinished(bool)), this, SLOT(measuringHeadersLoaded(bool)));
     connect(&measuringHFLoader, SIGNAL(error(QString)), this, SLOT(forwardError(QString)));
     connect(&measuringHFLoader, SIGNAL(warning(QString)), this, SLOT(forwardWarning(QString)));
-    connect(&measuringHFLoader, SIGNAL(info(QString)), this, SLOT(forwardInfo(QString)));
-    connect(&measuringHFLoader, SIGNAL(debug(QString)), this, SLOT(forwardDebug(QString)));
 
     connect(&hfLoader, SIGNAL(loadProgress(int)), this, SLOT(loadProgress(int)));
 	connect(&hfLoader, SIGNAL(loadFinished(bool)), this, SLOT(headersLoaded(bool)));
 	connect(&hfLoader, SIGNAL(error(QString)), this, SLOT(forwardError(QString)));
 	connect(&hfLoader, SIGNAL(warning(QString)), this, SLOT(forwardWarning(QString)));
-	connect(&hfLoader, SIGNAL(info(QString)), this, SLOT(forwardInfo(QString)));
-	connect(&hfLoader, SIGNAL(debug(QString)), this, SLOT(forwardDebug(QString)));
 
     connect(&tocLoader1, SIGNAL(loadProgress(int)), this, SLOT(loadProgress(int)));
 	connect(&tocLoader1, SIGNAL(loadFinished(bool)), this, SLOT(tocLoaded(bool)));
 	connect(&tocLoader1, SIGNAL(error(QString)), this, SLOT(forwardError(QString)));
 	connect(&tocLoader1, SIGNAL(warning(QString)), this, SLOT(forwardWarning(QString)));
-	connect(&tocLoader1, SIGNAL(info(QString)), this, SLOT(forwardInfo(QString)));
-	connect(&tocLoader1, SIGNAL(debug(QString)), this, SLOT(forwardDebug(QString)));
 
 	connect(&tocLoader2, SIGNAL(loadProgress(int)), this, SLOT(loadProgress(int)));
 	connect(&tocLoader2, SIGNAL(loadFinished(bool)), this, SLOT(tocLoaded(bool)));
 	connect(&tocLoader2, SIGNAL(error(QString)), this, SLOT(forwardError(QString)));
 	connect(&tocLoader2, SIGNAL(warning(QString)), this, SLOT(forwardWarning(QString)));
-	connect(&tocLoader2, SIGNAL(info(QString)), this, SLOT(forwardInfo(QString)));
-	connect(&tocLoader2, SIGNAL(debug(QString)), this, SLOT(forwardDebug(QString)));
 #endif
 
 	if ( ! settings.viewportSize.isEmpty())
@@ -720,6 +710,8 @@ void PdfConverterPrivate::endPage(PageObject & object, bool hasHeaderFooter, int
         printer->setPageMargins(leftMargin, topMargin, rightMargin, bottomMargin, settings.margin.left.second);
 		painter->restore();
 	}
+	QWebPrinter *webPrinter = objects[currentObject].web_printer;
+	webPrinter->spoolPage(objectPage + 1);
 
 }
 
@@ -835,7 +827,7 @@ void PdfConverterPrivate::spoolPage(int page) {
 		printer->newPage();
 
 	QWebPrinter *webPrinter = objects[currentObject].web_printer;
-	webPrinter->spoolPage(page+1);
+	//webPrinter->spoolPage(page+1);
 	foreach (QWebElement elm, pageFormElements[page+1]) {
 		QString type = elm.attribute("type");
 		QString tn = elm.tagName();
@@ -1169,18 +1161,6 @@ const settings::PdfGlobal & PdfConverter::globalSettings() const {
 	return d->settings;
 }
 
-
-/*!
-  \fn PdfConverter::debug(const QString & message)
-  \brief Signal emitted when a debug message was generated
-  \param message The debug message
-*/
-
-/*!
-  \fn PdfConverter::info(const QString & message)
-  \brief Signal emitted when a info message was generated
-  \param message The info message
-*/
 
 /*!
   \fn PdfConverter::warning(const QString & message)
